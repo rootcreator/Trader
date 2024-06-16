@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction System</title>
+</head>
+<body>
+    <h1>Prediction System</h1>
+    <label for="symbol">Enter Symbol:</label>
+    <input type="text" id="symbol" name="symbol">
+    <button onclick="getPrediction()">Get Prediction</button>
+    <div id="prediction-result"></div>
+
+    <script>
+        function getPrediction() {
+            const symbol = document.getElementById('symbol').value;
+            fetch(`/predict/?symbol=${symbol}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('prediction-result').innerText = 'Error: ' + data.error;
+                    } else {
+                        document.getElementById('prediction-result').innerText = 'Prediction: ' + data.prediction;
+                    }
+                });
+        }
+    </script>
+</body>
+</html>
