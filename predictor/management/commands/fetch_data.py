@@ -40,7 +40,8 @@ class Command(BaseCommand):
                         'trend_score': trend_score
                     }
                 )
-            self.stdout.write(self.style.SUCCESS(f'Successfully fetched and saved predictor for {symbol} from Alphavantage'))
+            self.stdout.write(self.style.SUCCESS(f'Successfully fetched and saved predictor for {symbol} from '
+                                                 f'Alphavantage'))
         else:
             self.stdout.write(self.style.ERROR(f'Failed to fetch predictor for {symbol} from Alphavantage'))
 

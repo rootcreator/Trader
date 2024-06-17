@@ -1,6 +1,5 @@
 import abc
 
-
 class BaseModel(abc.ABC):
     @abc.abstractmethod
     def train(self, X, y):

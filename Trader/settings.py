@@ -130,5 +130,3 @@ CRONJOBS = [
     ('0 0 * * *', 'predictor.management.commands.fetch_newsapi'),
     ('0 0 * * *', 'predictor.management.commands.fetch_yahoo_finance'),
 ]
-
-
