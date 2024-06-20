@@ -7,7 +7,7 @@ from predictor.algorithm.technical_models import (
     MACD,
     BollingerBands
 )
-from predictor.models import HistoricalData
+from predictor.models import CurrentTrendData
 
 
 class Command(BaseCommand):
@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
                 # Iterate through each row in the data and save to HistoricalData model
                 for index, row in data.iterrows():
-                    HistoricalData.objects.update_or_create(
+                    CurrentTrendData.objects.update_or_create(
                         symbol=symbol,
                         date=index,
                         defaults={

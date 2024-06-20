@@ -1,14 +1,17 @@
 import keras
 import numpy as np
+from _testcapi import sequence_length
+from keras import Model
+
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from statsmodels.tsa.arima.model import ARIMA  # For ARIMA model
 
-
 from tensorflow.keras.layers import Dense, LSTM, Conv1D, MaxPooling1D, Flatten
-
+import tensorflow.keras as keras
+from tensorflow.keras.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense
 
 class BaseModel:
     def train(self, X, y):
@@ -33,7 +36,7 @@ class LinearRegressionModel(BaseModel):
 
     def evaluate(self, X, y):
         preds = self.predict(X)
-        return np.mean((preds - y)**2)
+        return np.mean((preds - y) ** 2)
 
 
 class DecisionTreeModel(BaseModel):
@@ -48,7 +51,7 @@ class DecisionTreeModel(BaseModel):
 
     def evaluate(self, X, y):
         preds = self.predict(X)
-        return np.mean((preds - y)**2)
+        return np.mean((preds - y) ** 2)
 
 
 class RandomForestModel(BaseModel):
@@ -63,7 +66,7 @@ class RandomForestModel(BaseModel):
 
     def evaluate(self, X, y):
         preds = self.predict(X)
-        return np.mean((preds - y)**2)
+        return np.mean((preds - y) ** 2)
 
 
 class SVMModel(BaseModel):
@@ -78,7 +81,7 @@ class SVMModel(BaseModel):
 
     def evaluate(self, X, y):
         preds = self.predict(X)
-        return np.mean((preds - y)**2)
+        return np.mean((preds - y) ** 2)
 
 
 class RNNModel(BaseModel):
@@ -97,28 +100,27 @@ class RNNModel(BaseModel):
 
     def evaluate(self, X, y):
         preds = self.predict(X)
-        return np.mean((preds.flatten() - y)**2)
+        return np.mean((preds.flatten() - y) ** 2)
 
 
-class CNNModel(BaseModel):
-    def __init__(self, input_shape, filters=64, kernel_size=3):
-        self.model = keras.Sequential([
-            Conv1D(filters=filters, kernel_size=kernel_size, activation='relu', input_shape=input_shape),
-            MaxPooling1D(pool_size=2),
-            Flatten(),
-            Dense(1)
-        ])
+class CNNModel:
+    def __init__(self, input_shape):
+        input_shape = (X.shape[1],)
+        inputs = Input(shape=input_shape)
+        x = Conv1D(filters=64, kernel_size=3, activation='relu')(inputs)
+        x = MaxPooling1D(pool_size=2)(x)
+        x = Flatten()(x)
+        outputs = Dense(1, activation='sigmoid')(x)
 
-    def train(self, X, y):
-        self.model.compile(optimizer='adam', loss='mse')
-        self.model.fit(X, y, epochs=10, batch_size=32)
+        self.model = Model(inputs=inputs, outputs=outputs)
+        self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-    def predict(self, X):
-        return self.model.predict(X)
+    def train(self, X, y, epochs=10, batch_size=32):
+        self.model.fit(X, y, epochs=epochs, batch_size=batch_size)
 
-    def evaluate(self, X, y):
-        preds = self.predict(X)
-        return np.mean((preds.flatten() - y)**2)
+
+# Assuming input X has shape (batch_size, 100, 1)
+input_shape = (100, 1)
 
 
 class ARIMAModel(BaseModel):
@@ -137,7 +139,8 @@ class ARIMAModel(BaseModel):
 
     def evaluate(self, X, y):
         preds = self.predict(X)
-        return np.mean((preds - y)**2)
+        return np.mean((preds - y) ** 2)
+
 
 # Example usage:
 

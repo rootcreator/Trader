@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Predictor - Enter Symbol</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1>Prediction System</h1>
+            </div>
+            <div class="card-body">
+                <form action="{% url 'predict' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="symbol">Enter Symbol:</label>
+                        <input type="text" id="symbol" name="symbol" class="form-control" placeholder="Enter stock symbol">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Get Prediction</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.core.management import call_command
-from .models import HistoricalData, CurrentTrendData
+from .models import HistoricalData, CurrentTrendData, Prediction
 from django.contrib import messages
 
 
@@ -11,7 +11,7 @@ class CustomAdminActions(admin.ModelAdmin):
         for obj in queryset:
             symbol = obj.symbol
             try:
-                call_command('fetch_data.py', symbol=symbol)
+                call_command('fetch_data', symbol=symbol)
                 self.message_user(request, f'Successfully fetched predictor data for {symbol}', messages.SUCCESS)
             except Exception as e:
                 self.message_user(request, f'Error fetching predictor data for {symbol}: {e}', messages.ERROR)
@@ -22,3 +22,4 @@ class CustomAdminActions(admin.ModelAdmin):
 # Register your models and custom admin actions
 admin.site.register(HistoricalData, CustomAdminActions)
 admin.site.register(CurrentTrendData, CustomAdminActions)
+admin.site.register(Prediction)

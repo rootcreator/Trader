@@ -1,21 +1,9 @@
-# Django imports
+# predictor/views.py
+
 from django.shortcuts import render
 from django.http import JsonResponse
 from predictor.models import HistoricalData, CurrentTrendData, Prediction
-
-# Data processing and machine learning imports
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-
-# Custom model imports
 from predictor.algorithm.ensemble import ModelEnsemble
-from predictor.algorithm.technical_models import (
-    BollingerBands,
-    MACD,
-    RSI,
-    SimpleMovingAverage
-)
 from predictor.algorithm.forex_models import (
     CarryTradeModel,
     VolatilityModel,
@@ -26,109 +14,90 @@ from predictor.algorithm.risk_management_models import (
     FixedFractionModel,
     ExpectedValueModel
 )
+from predictor.algorithm.technical_models import (
+    BollingerBands,
+    MACD,
+    RSI,
+    SimpleMovingAverage
+)
+import pandas as pd
+import numpy as np
 
+def predict_view(request):
+    if request.method == 'POST':
+        symbol = request.POST.get('symbol')
 
-def index(request):
-    """Render the main page."""
-    return render(request, 'index.html')
+        # Fetch historical data from database
+        historical_data = HistoricalData.objects.filter(symbol=symbol).order_by('date')
 
+        if not historical_data.exists():
+            return JsonResponse({'error': f'No historical data found for symbol {symbol}'})
 
-def fetch_historical_data(symbol):
-    """Fetch historical data for a given symbol from the database."""
-    data = HistoricalData.objects.filter(symbol=symbol).values('date', 'close')
-    return pd.DataFrame(list(data))
+        # Fetch current trend data from database
+        current_trend_data = CurrentTrendData.objects.latest('date')
 
+        # Prepare data for prediction
+        X_historical = pd.DataFrame(list(historical_data.values()))
+        X_current = pd.DataFrame({
+            'open': [current_trend_data.open],
+            'close': [current_trend_data.close],
+            'high': [current_trend_data.high],
+            'volume': [current_trend_data.volume],
+            # Add more fields as needed
+        })
 
-def fetch_current_trend_data(symbol):
-    """Fetch current trend data for a given symbol from the database."""
-    data = CurrentTrendData.objects.filter(symbol=symbol).values('date', 'close')
-    return pd.DataFrame(list(data))
+        # Instantiate and train Simple Moving Average model
+        sma_model = SimpleMovingAverage(window=10)
+        X_historical_close = X_historical['close']  # Assuming 'close' is the column name for closing prices
+        sma_model.train(X_historical_close)
 
+        # Instantiate FixedFractionModel with required argument 'fraction'
+        fixed_fraction_model = FixedFractionModel(fraction=0.1)  # Replace with your desired fraction value
 
-def predict(request):
-    """Handle prediction requests."""
-    try:
-        symbol = request.GET.get('symbol')  # Get symbol from request
-        if not symbol:
-            return JsonResponse({'error': 'Symbol parameter is required.'}, status=400)
-
-        historical_data = fetch_historical_data(symbol)
-        current_trend_data = fetch_current_trend_data(symbol)
-
-        if historical_data.empty or current_trend_data.empty:
-            return JsonResponse({'error': 'No data available for the provided symbol.'}, status=404)
-
-        # Merge historical and current trend data
-        X = pd.concat([historical_data.set_index('date'), current_trend_data.set_index('date')], axis=1, join='inner').dropna().reset_index()
-        y = X.pop('close')
-
-        # Split the data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        # Standardize the data
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-
-        # Initialize technical models
-        bb_model = BollingerBands(window=20)
-        macd_model = MACD(short_window=12, long_window=26, signal_window=9)
-        rsi_model = RSI(window=14)
-        sma_model = SimpleMovingAverage(window=3)
-
-        # Initialize forex models
-        carry_trade_model = CarryTradeModel()
-        volatility_model = VolatilityModel()
-        mean_reversion_model = MeanReversionModel()
-
-        # Initialize risk management models
-        kelly_criterion_model = KellyCriterionModel()
-        fixed_fraction_model = FixedFractionModel()
-        expected_value_model = ExpectedValueModel()
-
-        # Train technical models
-        bb_model.train(X_train['close'])
-        macd_model.train(X_train['close'])
-        rsi_model.train(X_train['close'])
-        sma_model.train(X_train['close'])
-
-        # Train forex models
-        carry_trade_model.train(X_train['close'])
-        volatility_model.train(X_train['close'])
-        mean_reversion_model.train(X_train['close'])
-
-        # Train risk management models
-        kelly_criterion_model.train(X_train['close'])
-        fixed_fraction_model.train(X_train['close'])
-        expected_value_model.train(X_train['close'])
-
-        # Define base models
-        base_models = [
-            bb_model, macd_model, rsi_model, sma_model,
-            carry_trade_model, volatility_model, mean_reversion_model,
-            kelly_criterion_model, fixed_fraction_model, expected_value_model
+        # Combine various models into an ensemble
+        models = [
+            CarryTradeModel(),
+            VolatilityModel(),
+            MeanReversionModel(),
+            BollingerBands(window=20, num_std=2),
+            MACD(short_window=12, long_window=26, signal_window=9),
+            RSI(window=14),
+            KellyCriterionModel(),
+            fixed_fraction_model,
+            ExpectedValueModel(),
+            sma_model
         ]
 
-        # Initialize and train the ensemble model
-        ensemble_model = ModelEnsemble(models=base_models)
-        ensemble_model.train(X_train_scaled, y_train)
+        # Initialize ModelEnsemble with models
+        ensemble = ModelEnsemble(models)
 
-        # Evaluate the ensemble model
-        mse = ensemble_model.evaluate(X_test_scaled, y_test)
-        print(f"Ensemble MSE: {mse}")
+        # Make predictions using ensemble model
+        predictions = ensemble.predict(X_historical)
 
-        # Predict using the ensemble model
-        predictions = ensemble_model.predict(X_test_scaled)
-        results = pd.DataFrame({'Actual': y_test, 'Predicted': predictions})
-        print(results)
+        # Handle NaN values (replace with a default value or remove NaNs)
+        predictions_clean = np.nan_to_num(predictions, nan=0.0)
 
-        # Save the prediction to the database
-        Prediction.objects.create(
-            date=pd.Timestamp.now(),
-            predicted_price=predictions[0],  # Assuming the first prediction is needed
-            symbol=symbol
-        )
+        # Calculate average prediction if predictions_clean is an array
+        if isinstance(predictions_clean, np.ndarray):
+            average_prediction = np.mean(predictions_clean)
+        else:
+            average_prediction = predictions_clean
 
-        return JsonResponse({'prediction': predictions.tolist()})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        # Save predictions to Prediction model
+        try:
+            # Check if a similar prediction already exists for the symbol and value
+            existing_prediction = Prediction.objects.filter(symbol=symbol, predicted_value=average_prediction).first()
+            if existing_prediction:
+                # Handle case where prediction already exists (update or skip)
+                pass
+            else:
+                prediction_obj = Prediction(symbol=symbol, predicted_value=average_prediction)
+                prediction_obj.save()
+
+            return render(request, 'predictor/predict_result.html', {'predictions': average_prediction})
+
+        except ValueError as e:
+            return JsonResponse({'error': f'Error saving prediction: {str(e)}'})
+
+    # Handle GET request (initial loading of the form)
+    return render(request, 'predictor/predict_form.html')
