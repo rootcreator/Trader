@@ -19,6 +19,9 @@ class HistoricalData(models.Model):
     fib_level2 = models.FloatField(null=True, blank=True)
     fib_level3 = models.FloatField(null=True, blank=True)
     trend_score = models.FloatField(null=True, blank=True)
+    win_prob = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Percentage with two decimals
+    win_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Currency amount with two decimals
+    loss_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Currency amount with two decimals
 
     class Meta:
         unique_together = ('symbol', 'date')
@@ -44,6 +47,9 @@ class CurrentTrendData(models.Model):
     fib_level1 = models.FloatField(null=True, blank=True)
     fib_level2 = models.FloatField(null=True, blank=True)
     fib_level3 = models.FloatField(null=True, blank=True)
+    win_prob = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Percentage with two decimals
+    win_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Currency amount with two decimals
+    loss_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Currency amount with two decimals
 
     class Meta:
         unique_together = (('symbol', 'date'),)
@@ -64,4 +70,4 @@ class Prediction(models.Model):
         unique_together = ('symbol',  'predicted_value')
 
     def __str__(self):
-        return f"{self.symbol} - {self.date}"
+        return f"{self.symbol} - {self.timestamp}"

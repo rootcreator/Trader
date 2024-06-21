@@ -15,7 +15,7 @@ class ModelEnsemble:
 
     def train(self, x_train, y_train):
         for base_model in self.base_models:
-            boosted_model = AdaBoostRegressor(base_estimator=base_model,
+            boosted_model = AdaBoostRegressor(estimator=base_model,
                                               n_estimators=self.n_estimators,
                                               learning_rate=self.learning_rate)
             boosted_model.fit(x_train, y_train)

@@ -1,27 +1,21 @@
-# predictor/views.py
-
 from django.shortcuts import render
 from django.http import JsonResponse
 from predictor.models import HistoricalData, CurrentTrendData, Prediction
+from predictor.algorithm.technical_models import SimpleMovingAverage, RSI, MACD, BollingerBands
+from predictor.algorithm.machine_learning_models import LinearRegressionModel, DecisionTreeModel, RandomForestModel, \
+    SVMModel, ARIMAModel
+from predictor.algorithm.risk_management_models import FixedFractionModel, KellyCriterionModel, ExpectedValueModel
+from predictor.algorithm.forex_models import MeanReversionModel, CarryTradeModel, VolatilityModel
 from predictor.algorithm.ensemble import ModelEnsemble
-from predictor.algorithm.forex_models import (
-    CarryTradeModel,
-    VolatilityModel,
-    MeanReversionModel
-)
-from predictor.algorithm.risk_management_models import (
-    KellyCriterionModel,
-    FixedFractionModel,
-    ExpectedValueModel
-)
-from predictor.algorithm.technical_models import (
-    BollingerBands,
-    MACD,
-    RSI,
-    SimpleMovingAverage
-)
 import pandas as pd
 import numpy as np
+
+# Importing necessary scikit-learn models for AdaBoost
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+
 
 def predict_view(request):
     if request.method == 'POST':
@@ -43,54 +37,73 @@ def predict_view(request):
             'close': [current_trend_data.close],
             'high': [current_trend_data.high],
             'volume': [current_trend_data.volume],
-            # Add more fields as needed
         })
 
-        # Instantiate and train Simple Moving Average model
+        # Separate features and target for ML models
+        X_features = X_historical[['open', 'high', 'volume']]
+        y_target = X_historical['close']
+
+        # Instantiate and train models
         sma_model = SimpleMovingAverage(window=10)
-        X_historical_close = X_historical['close']  # Assuming 'close' is the column name for closing prices
-        sma_model.train(X_historical_close)
+        sma_model.train(X_historical['close'])
 
-        # Instantiate FixedFractionModel with required argument 'fraction'
-        fixed_fraction_model = FixedFractionModel(fraction=0.1)  # Replace with your desired fraction value
+        rsi_model = RSI(window=14)
+        rsi_model.train(X_historical['close'])
 
-        # Combine various models into an ensemble
-        models = [
-            CarryTradeModel(),
-            VolatilityModel(),
-            MeanReversionModel(),
-            BollingerBands(window=20, num_std=2),
-            MACD(short_window=12, long_window=26, signal_window=9),
-            RSI(window=14),
-            KellyCriterionModel(),
-            fixed_fraction_model,
-            ExpectedValueModel(),
-            sma_model
-        ]
+        macd_model = MACD(short_window=12, long_window=26, signal_window=9)
+        macd_model.train(X_historical['close'])
 
-        # Initialize ModelEnsemble with models
+        bb_model = BollingerBands(window=20, num_std=2)
+        bb_model.train(X_historical['close'])
+
+        # Use scikit-learn models for ensemble
+        lr_model = LinearRegression()
+        dt_model = DecisionTreeRegressor()
+        rf_model = RandomForestRegressor()
+        svm_model = SVR()
+
+        lr_model.fit(X_features, y_target)
+        dt_model.fit(X_features, y_target)
+        rf_model.fit(X_features, y_target)
+        svm_model.fit(X_features, y_target)
+
+        arima_model = ARIMAModel(order=(5, 1, 0))
+        arima_model.train(X_historical['close'])
+
+        fixed_fraction_model = FixedFractionModel(fraction=0.1)
+        kelly_model = KellyCriterionModel(win_prob=0.6, win_loss_ratio=2)  # Example values
+        ev_model = ExpectedValueModel(win_prob=0.6, win_amount=100, loss_amount=50)  # Example values
+
+        mean_reversion_model = MeanReversionModel()
+        mean_reversion_model.train(X_historical['close'])
+
+        volatility_model = VolatilityModel()
+        volatility_model.train(X_historical['close'])
+
+        carry_trade_model = CarryTradeModel()  # Implement training if necessary
+
+        # Combine models into an ensemble
+        models = [lr_model, dt_model, rf_model, svm_model]
         ensemble = ModelEnsemble(models)
 
-        # Make predictions using ensemble model
-        predictions = ensemble.predict(X_historical)
+        # Train the ensemble model
+        ensemble.train(X_features, y_target)
 
-        # Handle NaN values (replace with a default value or remove NaNs)
+        # Make predictions using ensemble model
+        X_current_features = X_current[['open', 'high', 'volume']]
+        predictions = ensemble.predict(X_current_features)
+
+        # Handle NaN values
         predictions_clean = np.nan_to_num(predictions, nan=0.0)
 
         # Calculate average prediction if predictions_clean is an array
-        if isinstance(predictions_clean, np.ndarray):
-            average_prediction = np.mean(predictions_clean)
-        else:
-            average_prediction = predictions_clean
+        average_prediction = predictions_clean if isinstance(predictions_clean, (float, int)) else np.mean(
+            predictions_clean)
 
         # Save predictions to Prediction model
         try:
-            # Check if a similar prediction already exists for the symbol and value
             existing_prediction = Prediction.objects.filter(symbol=symbol, predicted_value=average_prediction).first()
-            if existing_prediction:
-                # Handle case where prediction already exists (update or skip)
-                pass
-            else:
+            if not existing_prediction:
                 prediction_obj = Prediction(symbol=symbol, predicted_value=average_prediction)
                 prediction_obj.save()
 

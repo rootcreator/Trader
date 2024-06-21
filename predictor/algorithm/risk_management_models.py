@@ -2,15 +2,20 @@ import numpy as np
 
 
 class ExpectedValueModel:
-    def __init__(self):
-        pass
+    def __init__(self, win_prob=None, win_amount=None, loss_amount=None):
+        self.win_prob = win_prob
+        self.win_amount = win_amount
+        self.loss_amount = loss_amount
 
     def train(self, data):
-        # No training required for expected value model
-        pass
+        pass  # If any training is required, otherwise keep it as a placeholder
 
     def predict(self, data):
-        return data.mean()  # Returns the mean of the data
+        if self.win_prob is not None and self.win_amount is not None and self.loss_amount is not None:
+            expected_value = (self.win_prob * self.win_amount) - ((1 - self.win_prob) * self.loss_amount)
+            return expected_value
+        else:
+            return 0.0  # Default value if parameters are not set
 
 
 class FixedFractionModel:
@@ -26,24 +31,19 @@ class FixedFractionModel:
 
 
 class KellyCriterionModel:
-    def __init__(self):
-        self.win_prob = None
-        self.win_loss_ratio = None
+    def __init__(self, win_prob=None, win_loss_ratio=None):
+        self.win_prob = win_prob
+        self.win_loss_ratio = win_loss_ratio
 
     def train(self, data):
-        # Calculate the win probability and win/loss ratio
-        wins = data[data > 0]
-        losses = data[data <= 0]
-        self.win_prob = len(wins) / len(data)
-        self.win_loss_ratio = abs(wins.mean() / losses.mean())
+        pass  # If any training is required, otherwise keep it as a placeholder
 
     def predict(self, data):
-        if self.win_prob is None or self.win_loss_ratio is None:
-            raise ValueError("Model has not been trained yet")
-
-        # Kelly formula: f* = win_prob - (1 - win_prob) / win_loss_ratio
-        kelly_fraction = self.win_prob - (1 - self.win_prob) / self.win_loss_ratio
-        return kelly_fraction
+        if self.win_prob is not None and self.win_loss_ratio is not None:
+            kelly_fraction = self.win_prob - (1 - self.win_prob) / self.win_loss_ratio
+            return kelly_fraction
+        else:
+            return 0.0  # Default value if parameters are not set
 
 
 # Example usage:
