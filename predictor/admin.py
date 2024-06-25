@@ -1,9 +1,31 @@
 from django.contrib import admin
 from django.core.management import call_command
-from .models import HistoricalData, CurrentTrendData, Prediction
 from django.contrib import messages
+from import_export.admin import ImportExportModelAdmin
+from import_export.resources import ModelResource
+from .models import HistoricalData, CurrentTrendData, Prediction
 
 
+# Define resource classes for each model
+class HistoricalDataResource(ModelResource):
+    class Meta:
+        model = HistoricalData
+        fields = ['symbol', 'date', 'open', 'close', 'high', 'low']  # Specify the fields to export
+
+
+class CurrentTrendDataResource(ModelResource):
+    class Meta:
+        model = CurrentTrendData
+        fields = ['symbol', 'date', 'open', 'close', 'high', 'low']  # Specify the fields to export
+
+
+class PredictionResource(ModelResource):
+    class Meta:
+        model = Prediction
+        fields = ['symbol', 'date', 'open', 'close', 'high', 'low']  # Specify the fields to export
+
+
+# Define a custom admin action mixin
 class CustomAdminActions(admin.ModelAdmin):
     actions = ['fetch_predictor_data']
 
@@ -19,7 +41,20 @@ class CustomAdminActions(admin.ModelAdmin):
     fetch_predictor_data.short_description = 'Fetch predictor data for selected symbols'
 
 
-# Register your models and custom admin actions
-admin.site.register(HistoricalData, CustomAdminActions)
-admin.site.register(CurrentTrendData, CustomAdminActions)
-admin.site.register(Prediction)
+# Combine custom actions and import-export functionality
+class HistoricalDataAdmin(CustomAdminActions, ImportExportModelAdmin):
+    resource_class = HistoricalDataResource
+
+
+class CurrentTrendDataAdmin(CustomAdminActions, ImportExportModelAdmin):
+    resource_class = CurrentTrendDataResource
+
+
+class PredictionAdmin(ImportExportModelAdmin):
+    resource_class = PredictionResource
+
+
+# Register the models with custom admin actions and import-export functionality
+admin.site.register(HistoricalData, HistoricalDataAdmin)
+admin.site.register(CurrentTrendData, CurrentTrendDataAdmin)
+admin.site.register(Prediction, PredictionAdmin)
