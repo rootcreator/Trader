@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('symbols', nargs='+', type=str, help='Stock symbols to fetch data for')
-        parser.add_argument('--period', type=str, default='1mo', help='Period of historical data (default: 1mo)')
+        parser.add_argument('--period', type=str, default='5d', help='Period of historical data (default: 5d)')
 
     def handle(self, *args, **options):
         symbols = options['symbols']
