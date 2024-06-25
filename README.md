@@ -44,7 +44,7 @@ The Forex Prediction System is a Django-based web application designed to predic
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/forex-prediction-system.git
+   git clone https://github.com/rootcreator/trader.git
    cd forex-prediction-system
    python -m venv venv
    pip install -r requirements.txt
