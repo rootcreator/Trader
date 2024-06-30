@@ -76,8 +76,7 @@ statsmodels==0.14.2
 tablib==3.5.0
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
-tensorflow==2.16.1  ; python_version >= '3.7' and python_version < '3.11'
-
+tensorflow==2.16.1
 termcolor==2.4.0
 textblob==0.18.0.post0
 threadpoolctl==3.5.0
