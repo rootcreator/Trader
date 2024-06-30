@@ -19,7 +19,7 @@ from sklearn.svm import SVR
 import requests
 from datetime import datetime
 
-ALPHA_VANTAGE_API_KEY = '9F2ZXE5KLGDWTG7C'
+ALPHA_VANTAGE_API_KEY = '7ZZUI92KINYMCCGB'
 
 
 def fetch_latest_market_data(symbol):

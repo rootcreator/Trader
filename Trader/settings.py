@@ -73,13 +73,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Trader.wsgi.application'
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+# Database configuration using dj_database_url
 import dj_database_url
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('postgresql://trader_hmak_user:0H4PzyP3e9OIZn0gTpUGIwIuQcDJcs1M@dpg-cq0emaqju9rs73as1cb0-a.oregon-postgres.render.com/trader_hmak'))
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL')
+    )
 }
 
 # Password validation
@@ -116,6 +124,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
