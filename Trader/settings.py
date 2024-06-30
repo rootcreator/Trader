@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-=z6yeapdg+nfpm2y9(l$93w42he^bjg8(qq)d2ps1nvi1pyde3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['https://trader-cdja.onrender.com/','']
 
 # Application definition
 
