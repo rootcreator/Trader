@@ -1,17 +1,9 @@
-import keras
 import numpy as np
-from _testcapi import sequence_length
-from keras import Model
-
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from statsmodels.tsa.arima.model import ARIMA  # For ARIMA model
-
-from tensorflow.keras.layers import Dense, LSTM, Conv1D, MaxPooling1D, Flatten
-import tensorflow.keras as keras
-from tensorflow.keras.layers import Input, Conv1D, MaxPooling1D, Flatten, Dense
 
 
 class BaseModel:
