@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-=z6yeapdg+nfpm2y9(l$93w42he^bjg8(qq)d2ps1nvi1pyde3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['https://trader-cdja.onrender.com/','127.0.0.1','']
 
@@ -78,8 +78,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env
 load_dotenv()
 
-# Database configuration using dj_database_url
-import dj_database_url
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -138,3 +136,5 @@ CRONJOBS = [
     ('0 0 * * *', 'predictor.management.commands.fetch_newsapi'),
     ('0 0 * * *', 'predictor.management.commands.fetch_yahoo_finance'),
 ]
+
+
