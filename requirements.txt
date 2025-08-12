@@ -33,7 +33,7 @@ h5py==3.11.0
 html5lib==1.1
 idna==3.7
 joblib==1.4.2
-keras==3.3.3
+keras==3.11.1
 kombu==5.3.7
 libclang==18.1.1
 lxml==5.2.2
